@@ -52,9 +52,11 @@ func (wp *workerPool) IsLog(ok bool) {
 	wp.pool.isLog(ok)
 }
 
-// TODO
+// TODO: set worker waiting time
 func (wp *workerPool) SetWaitingTime(dur *time.Duration) {
 
 }
 
 // TODO: optimize log
+// TODO: write testing
+// TODO: write README What is workerpool?

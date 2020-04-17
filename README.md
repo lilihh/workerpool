@@ -1,5 +1,6 @@
 # workerpool
 
+## What is workerpool?
 
 ## Installation
     $ go get github.com/lilihh/workerpool
