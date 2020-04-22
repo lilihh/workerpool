@@ -1,13 +1,12 @@
 package workerpool
 
 import (
+	"fmt"
 	"log"
-	"sync"
 )
 
-func newDispatcher(buf int, waitGroup *sync.WaitGroup) iDispatcher {
+func newDispatcher(buf int) iDispatcher {
 	return &dispatcher{
-		wg:          waitGroup,
 		taskStorage: make(chan Task, buf),
 		quit:        make(chan bool),
 	}
@@ -16,12 +15,13 @@ func newDispatcher(buf int, waitGroup *sync.WaitGroup) iDispatcher {
 type iDispatcher interface {
 	start(pool iPool)
 	close()
+	receiveTask(task Task) error
+	receiveTaskEvenFlood(task Task)
+
 	isLog(ok bool)
-	receiveTask(task Task)
 }
 
 type dispatcher struct {
-	wg          *sync.WaitGroup
 	taskStorage chan Task
 	quit        chan bool
 
@@ -44,7 +44,16 @@ func (d *dispatcher) isLog(ok bool) {
 	d.islog = ok
 }
 
-func (d *dispatcher) receiveTask(task Task) {
+func (d *dispatcher) receiveTask(task Task) error {
+	select {
+	case d.taskStorage <- task:
+		return nil
+	default:
+		return fmt.Errorf("buffer over flow")
+	}
+}
+
+func (d *dispatcher) receiveTaskEvenFlood(task Task) {
 	d.taskStorage <- task
 }
 

@@ -25,6 +25,6 @@ func main() {
 
     // push tasks into the workerpool
     tasks := []exampleTask{}{...}
-    wp.ReceiveTasks(tasks)
+    wp.ReceiveTasks(tasks...)
 }
 ```

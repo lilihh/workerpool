@@ -1,17 +1,10 @@
 package workerpool
 
-import (
-	"sync"
-	"time"
-)
-
 // NewWorkerPool return a pool with workers
 func NewWorkerPool(buf, workers int) IWorkerPool {
-	var waitGroup sync.WaitGroup
 	return &workerPool{
-		wg:         &waitGroup,
-		dispatcher: newDispatcher(buf, &waitGroup),
-		pool:       newPool(workers, &waitGroup),
+		dispatcher: newDispatcher(buf),
+		pool:       newPool(workers),
 	}
 }
 
@@ -19,15 +12,17 @@ func NewWorkerPool(buf, workers int) IWorkerPool {
 type IWorkerPool interface {
 	Start()
 	Close()
-	ReceiveTasks(tasks []Task)
+	ReceiveTasks(tasks ...Task)
 
 	IsLog(ok bool)
+	AllowTaskOverFlow(ok bool)
 }
 
 type workerPool struct {
-	wg         *sync.WaitGroup
 	dispatcher iDispatcher
 	pool       iPool
+
+	allowTaskOverFlow bool
 }
 
 func (wp *workerPool) Start() {
@@ -38,13 +33,19 @@ func (wp *workerPool) Close() {
 	wp.dispatcher.close()
 }
 
-func (wp *workerPool) ReceiveTasks(tasks []Task) {
-	wp.wg.Add(len(tasks))
+func (wp *workerPool) ReceiveTasks(tasks ...Task) {
+	if wp.allowTaskOverFlow {
+		for _, task := range tasks {
+			wp.dispatcher.receiveTaskEvenFlood(task)
+		}
 
-	for _, task := range tasks {
-		wp.dispatcher.receiveTask(task)
+	} else {
+		for _, task := range tasks {
+			if err := wp.dispatcher.receiveTask(task); err != nil {
+				return
+			}
+		}
 	}
-	wp.wg.Wait()
 }
 
 func (wp *workerPool) IsLog(ok bool) {
@@ -52,11 +53,16 @@ func (wp *workerPool) IsLog(ok bool) {
 	wp.pool.isLog(ok)
 }
 
-// TODO: set worker waiting time
-func (wp *workerPool) SetWaitingTime(dur *time.Duration) {
-
+func (wp *workerPool) AllowTaskOverFlow(ok bool) {
+	wp.allowTaskOverFlow = ok
 }
 
+// TODO: set worker waiting time
+// func (wp *workerPool) SetWaitingTime(dur *time.Duration) {
+
+// }
+
+// TODO: define error
 // TODO: optimize log
 // TODO: write testing
 // TODO: write README What is workerpool?

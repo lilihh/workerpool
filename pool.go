@@ -2,12 +2,10 @@ package workerpool
 
 import (
 	"log"
-	"sync"
 )
 
-func newPool(numOfWorker int, waitGroup *sync.WaitGroup) iPool {
+func newPool(numOfWorker int) iPool {
 	p := &pool{
-		wg:          waitGroup,
 		idleWorkers: make(chan worker, numOfWorker),
 	}
 
@@ -24,7 +22,6 @@ type iPool interface {
 }
 
 type pool struct {
-	wg          *sync.WaitGroup
 	idleWorkers chan worker
 
 	islog bool
@@ -43,13 +40,11 @@ func (p *pool) launchTaskToWorker(task Task) {
 			err := worker.ProcessTask(task)
 			if p.islog {
 				if err != nil {
-					log.Println("worker #", worker.ID(), " is done with error:", err)
+					log.Printf("worker #%d is done with error:%v\n", worker.ID(), err.Error())
 				} else {
-					log.Println("worker #", worker.ID(), " is done with no error")
+					log.Printf("worker #%d is done with no error\n", worker.ID())
 				}
 			}
-
-			p.wg.Done()
 		}()
 	}
 }
