@@ -1,37 +1,35 @@
 package main
 
 import (
-	"time"
+	"sync"
 	"workerpool"
 )
 
 var wp workerpool.IWorkerPool
-var service *server
 
 func main() {
 	// initialize
 	wp = workerpool.NewWorkerPool(5, 2)
-	wp.AllowTaskOverFlow(false)
-	wp.IsLog(true)
+	wp.Debug(true)
 
 	wp.Start()
 	defer wp.Close()
 
 	// run
-	service := &server{}
-	go service.run()
-
-	// just for waiting
-	<-time.After(5 * time.Second)
-}
-
-type server struct{}
-
-func (server) run() {
+	wg := &sync.WaitGroup{}
 	tasks := make([]workerpool.Task, 0, 10)
 	for i := 0; i < 10; i++ {
-		tasks = append(tasks, newTestTask(i+1))
+		tasks = append(tasks, newTestTask(wg, i+1))
 	}
 
-	wp.ReceiveTasks(tasks...)
+	wg.Add(len(tasks))
+	go func() {
+		for _, task := range tasks {
+			for err := wp.ReceiveTask(task); err != nil; {
+				err = wp.ReceiveTask(task)
+			}
+		}
+	}()
+
+	wg.Wait()
 }

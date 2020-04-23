@@ -12,10 +12,9 @@ func NewWorkerPool(buf, workers int) IWorkerPool {
 type IWorkerPool interface {
 	Start()
 	Close()
-	ReceiveTasks(tasks ...Task)
+	ReceiveTask(task Task) error
 
-	IsLog(ok bool)
-	AllowTaskOverFlow(ok bool)
+	Debug(ok bool)
 }
 
 type workerPool struct {
@@ -33,33 +32,20 @@ func (wp *workerPool) Close() {
 	wp.dispatcher.close()
 }
 
-func (wp *workerPool) ReceiveTasks(tasks ...Task) {
-	if wp.allowTaskOverFlow {
-		for _, task := range tasks {
-			wp.dispatcher.receiveTaskEvenFlood(task)
-		}
-
-	} else {
-		for _, task := range tasks {
-			if err := wp.dispatcher.receiveTask(task); err != nil {
-				return
-			}
-		}
+func (wp *workerPool) ReceiveTask(task Task) error {
+	if err := wp.dispatcher.receiveTask(task); err != nil {
+		return err
 	}
+	return nil
 }
 
-func (wp *workerPool) IsLog(ok bool) {
+func (wp *workerPool) Debug(ok bool) {
 	wp.dispatcher.isLog(ok)
 	wp.pool.isLog(ok)
 }
 
-func (wp *workerPool) AllowTaskOverFlow(ok bool) {
-	wp.allowTaskOverFlow = ok
-}
-
 // TODO: set worker waiting time
 // func (wp *workerPool) SetWaitingTime(dur *time.Duration) {
-
 // }
 
 // TODO: define error

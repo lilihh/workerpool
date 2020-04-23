@@ -16,7 +16,6 @@ type iDispatcher interface {
 	start(pool iPool)
 	close()
 	receiveTask(task Task) error
-	receiveTaskEvenFlood(task Task)
 
 	isLog(ok bool)
 }
@@ -51,10 +50,6 @@ func (d *dispatcher) receiveTask(task Task) error {
 	default:
 		return fmt.Errorf("buffer over flow")
 	}
-}
-
-func (d *dispatcher) receiveTaskEvenFlood(task Task) {
-	d.taskStorage <- task
 }
 
 func (d *dispatcher) launchTask(pool iPool) {
