@@ -58,4 +58,3 @@ func (wp *workerPool) Debug(ok bool) {
 // TODO: define error
 // TODO: optimize log
 // TODO: write testing
-// TODO: write README What is workerpool?
