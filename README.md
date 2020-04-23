@@ -127,15 +127,15 @@ func main() {
 
     // generate tasks
     wg := &sync.WaitGroup{}
-
-	tasks := make([]workerpool.Task, 0, 10)
-	for i := 0; i < 10; i++ {
-		tasks = append(tasks, newExampleTask(wg, fmt.Sprintf("%s",i+1)))
-	}
+    
+    tasks := make([]workerpool.Task, 0, 10)
+    for i := 0; i < 10; i++ {
+        tasks = append(tasks, newExampleTask(wg, fmt.Sprintf("%s",i+1)))
+    }
 
     // perocess tasks
-	wg.Add(len(tasks))
-	
+    wg.Add(len(tasks))
+
     for _, task := range tasks {
         for err := wp.ReceiveTask(task); err != nil; {
             err = wp.ReceiveTask(task)
