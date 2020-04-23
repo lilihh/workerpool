@@ -25,6 +25,7 @@ func main() {
 	wg.Add(len(tasks))
 	go func() {
 		for _, task := range tasks {
+			// 全部做完
 			for err := wp.ReceiveTask(task); err != nil; {
 				err = wp.ReceiveTask(task)
 			}

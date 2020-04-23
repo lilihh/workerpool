@@ -1,11 +1,17 @@
 package workerpool
 
 // NewWorkerPool return a pool with workers
-func NewWorkerPool(buf, workers int) IWorkerPool {
-	return &workerPool{
+func NewWorkerPool(buf, numOfWorkers int) IWorkerPool {
+	wp := &workerPool{
 		dispatcher: newDispatcher(buf),
-		pool:       newPool(workers),
+		workers:    make([]*worker, 0, numOfWorkers),
 	}
+
+	for i := 0; i < numOfWorkers; i++ {
+		wp.workers = append(wp.workers, newWorker(i+1, wp.dispatcher))
+	}
+
+	return wp
 }
 
 // IWorkerPool will receive tasks and dispatch them to workers
@@ -18,18 +24,22 @@ type IWorkerPool interface {
 }
 
 type workerPool struct {
-	dispatcher iDispatcher
-	pool       iPool
+	dispatcher *dispatcher
+	workers    []*worker
 
 	allowTaskOverFlow bool
 }
 
 func (wp *workerPool) Start() {
-	wp.dispatcher.start(wp.pool)
+	for _, worker := range wp.workers {
+		worker.start()
+	}
 }
 
 func (wp *workerPool) Close() {
-	wp.dispatcher.close()
+	for _, worker := range wp.workers {
+		worker.close()
+	}
 }
 
 func (wp *workerPool) ReceiveTask(task Task) error {
@@ -40,13 +50,10 @@ func (wp *workerPool) ReceiveTask(task Task) error {
 }
 
 func (wp *workerPool) Debug(ok bool) {
-	wp.dispatcher.isLog(ok)
-	wp.pool.isLog(ok)
+	for _, worker := range wp.workers {
+		worker.log(ok)
+	}
 }
-
-// TODO: set worker waiting time
-// func (wp *workerPool) SetWaitingTime(dur *time.Duration) {
-// }
 
 // TODO: define error
 // TODO: optimize log
