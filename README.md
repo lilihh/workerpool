@@ -1,12 +1,12 @@
 # workerpool
 
 ## What is workerpool?
-Workerpool is a pool containing several workers, who are waiting to process task send by you.
+Workerpool is a pool containing several workers, who are waiting to process tasks independently. In other word, workerpool is a project controlling amount of thread.
 
 ## Implement
 * Every worker is a goroutine/thread, and start working when `Start()` is be called.
 * There's a channel of `Task` in dispatcher, storing tasks send by `ReceiveTask(task Task)`
-
+* `Task` is an interface holding only one method: `Exec() error`
 * Structure Diagram
 ```go
     workerpool
