@@ -25,6 +25,6 @@ func (t *testTask) Exec() error {
 	}()
 
 	fmt.Println(t.id)
-	time.Sleep(time.Millisecond)
+	time.Sleep(time.Second)
 	return nil
 }

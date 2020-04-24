@@ -8,24 +8,27 @@ Workerpool is a pool containing several workers, who are waiting to process task
 * There's a channel of `Task` in dispatcher, storing tasks send by `ReceiveTask(task Task)`
 * `Task` is an interface holding only one method: `Exec() error`
 * Structure Diagram
-```go
+```text
     workerpool
      __________________________________________________________
     |
-    |                           goruntine
-    |                           grab and process task
-    |                                              _
-    |                                               |
-    |   dispatcher              |---->  worker #1   |
-    |   ------------------      |                   |
-    |   tasks                   |---->  worker #2   |
-    |   ██ ██ ██ ██ ██ ██   ----|                    \
-    |   ------------------      |---->  worker #3     workerNum
-    |                           |                    /
-    |   |<--   buf   -->|       |---->  worker #4   |
-    |                           .                   |
-    |                           .                   |      
-    |                           .                  _|
+    |   dispatcher                          workers
+    |   contain 2 storage                   implement by goruntine
+    |   implement by channel                grab and process task
+    |                                                          _
+    |   ------------------                                      |
+    |   priority tasks      (grab first)    |---->  worker #1   |
+    |   ██ ██ ██ ██ ██ ██  -----------------|                   |
+    |   ------------------                  |---->  worker #2   |
+    |                                       |                   |
+    |                                       |---->  worker #3    \
+    |   ------------------                  |                     workerNum
+    |   normal tasks        (grab later)    |---->  worker #4    / 
+    |   ██ ██ ██ ██ ██ ██  - - - - - - - - -|                   | 
+    |   ------------------                  |---->  worker #5   |
+    |                                       .                   |
+    |                                       .                   |      
+    |   |<---  buf   --->|                  .                  _|
     |
 ```
 

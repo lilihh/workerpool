@@ -1,7 +1,13 @@
 package workerpool
 
+import "fmt"
+
 // NewWorkerPool return a pool with workers
 func NewWorkerPool(buf, numOfWorkers int) IWorkerPool {
+	if buf < 0 || numOfWorkers < 1 {
+		return nil
+	}
+
 	wp := &workerPool{
 		dispatcher: newDispatcher(buf),
 		workers:    make([]*worker, 0, numOfWorkers),
@@ -18,7 +24,7 @@ func NewWorkerPool(buf, numOfWorkers int) IWorkerPool {
 type IWorkerPool interface {
 	Start()
 	Close()
-	ReceiveTask(task Task) error
+	ReceiveTask(task Task, isPriority bool) error
 
 	Debug(ok bool)
 }
@@ -42,10 +48,21 @@ func (wp *workerPool) Close() {
 	}
 }
 
-func (wp *workerPool) ReceiveTask(task Task) error {
-	if err := wp.dispatcher.receiveTask(task); err != nil {
-		return err
+func (wp *workerPool) ReceiveTask(task Task, isPriority bool) error {
+	if task == nil {
+		return fmt.Errorf("illeagalArgument")
 	}
+
+	if isPriority {
+		if err := wp.dispatcher.receivePriorityTask(task); err != nil {
+			return err
+		}
+	} else {
+		if err := wp.dispatcher.receiveNormalTask(task); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

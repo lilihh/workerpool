@@ -2,6 +2,7 @@ package workerpool
 
 import (
 	"log"
+	"time"
 )
 
 func newWorker(id int, dispatcher *dispatcher) *worker {
@@ -22,8 +23,22 @@ type worker struct {
 func (w *worker) start() {
 	go func() {
 		for {
+			var task Task
+
 			select {
-			case task := <-w.taskDepositary.taskStorage:
+			case <-w.quit:
+				return
+			case task = <-w.taskDepositary.priorityTasks:
+				// grab priority task fisrt
+			default:
+				select {
+				case task = <-w.taskDepositary.normalTasks:
+					// grab normal task later
+				default:
+				}
+			}
+
+			if task != nil {
 				err := w.processTask(task)
 
 				if w.isLog {
@@ -33,10 +48,9 @@ func (w *worker) start() {
 						log.Printf("worker #%d is done with no error\n", w.id)
 					}
 				}
-
-			case <-w.quit:
-				return
 			}
+
+			time.Sleep(time.Millisecond) // release CPU utilization
 		}
 	}()
 }

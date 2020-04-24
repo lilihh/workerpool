@@ -6,17 +6,28 @@ import (
 
 func newDispatcher(buf int) *dispatcher {
 	return &dispatcher{
-		taskStorage: make(chan Task, buf),
+		normalTasks:   make(chan Task, buf),
+		priorityTasks: make(chan Task, buf),
 	}
 }
 
 type dispatcher struct {
-	taskStorage chan Task // 工作儲存庫
+	normalTasks   chan Task // 一般工作儲存庫
+	priorityTasks chan Task // 優先工作儲存庫
 }
 
-func (d *dispatcher) receiveTask(task Task) error {
+func (d *dispatcher) receiveNormalTask(task Task) error {
 	select {
-	case d.taskStorage <- task:
+	case d.normalTasks <- task:
+		return nil
+	default:
+		return fmt.Errorf("buffer over flow")
+	}
+}
+
+func (d *dispatcher) receivePriorityTask(task Task) error {
+	select {
+	case d.priorityTasks <- task:
 		return nil
 	default:
 		return fmt.Errorf("buffer over flow")
