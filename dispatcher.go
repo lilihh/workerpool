@@ -1,19 +1,15 @@
 package workerpool
 
-import (
-	"fmt"
-)
-
 func newDispatcher(buf int) *dispatcher {
 	return &dispatcher{
-		normalTasks:   make(chan Task, buf),
-		priorityTasks: make(chan Task, buf),
+		normalTasks: make(chan Task, buf),
+		urgentTasks: make(chan Task, buf),
 	}
 }
 
 type dispatcher struct {
-	normalTasks   chan Task // 一般工作儲存庫
-	priorityTasks chan Task // 優先工作儲存庫
+	normalTasks chan Task // storage for normal tasks
+	urgentTasks chan Task // storage for urgent tasks
 }
 
 func (d *dispatcher) receiveNormalTask(task Task) error {
@@ -21,15 +17,15 @@ func (d *dispatcher) receiveNormalTask(task Task) error {
 	case d.normalTasks <- task:
 		return nil
 	default:
-		return fmt.Errorf("buffer over flow")
+		return newError(NormalBufferOverflow)
 	}
 }
 
-func (d *dispatcher) receivePriorityTask(task Task) error {
+func (d *dispatcher) receiveUrgentTask(task Task) error {
 	select {
-	case d.priorityTasks <- task:
+	case d.urgentTasks <- task:
 		return nil
 	default:
-		return fmt.Errorf("buffer over flow")
+		return newError(UrgentBufferOverflow)
 	}
 }

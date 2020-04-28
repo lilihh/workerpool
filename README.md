@@ -1,11 +1,11 @@
 # workerpool
 
 ## What is workerpool?
-Workerpool is a pool containing several workers, who are waiting to process tasks independently. In other word, workerpool is a project controlling amount of thread.
+Workerpool is a pool containing several workers, who are waiting to process tasks independently. In other word, workerpool is a project controlling amount of goroutine/thread.
 
 ## Implement
 * Every worker is a goroutine/thread, and start working when `Start()` is be called.
-* There's a channel of `Task` in dispatcher, storing tasks send by `ReceiveTask(task Task)`
+* There's a channel of `Task` in dispatcher, storing tasks send by `ReceiveTask(task Task, isPriority bool)`
 * `Task` is an interface holding only one method: `Exec() error`
 * Structure Diagram
 ```text
@@ -17,7 +17,7 @@ Workerpool is a pool containing several workers, who are waiting to process task
     |   implement by channel                grab and process task
     |                                                          _
     |   ------------------                                      |
-    |   priority tasks      (grab first)    |---->  worker #1   |
+    |   urgent tasks        (grab first)    |---->  worker #1   |
     |   ██ ██ ██ ██ ██ ██  -----------------|                   |
     |   ------------------                  |---->  worker #2   |
     |                                       |                   |
@@ -76,9 +76,21 @@ func main() {
 }
 ```
 
+### Example with priorty
+If there are some tasks are urgent, you should mark it with high priority, and workers in workerpool will process if first.
+
+```go
+// normal task
+err := wp.ReceiveTask(task, false)
+
+// urgent task
+err := wp.ReceiveTask(task, true)
+
+```
+
 ### Example with every task must be done
 The capacity of task-buffer in the workerpool is constant. What about the amount of tasks is larger than the capacity?
-`ReceiveTask(task Task)` will return an error if the workerpool receive a task but the buffer is full already. In that case, workerpool do not receive that task actually. So you have to control it by yourself.
+`ReceiveTask(task Task, isPriority bool)` will return an error if the workerpool receive a task but the buffer is full already. In that case, workerpool do not receive that task actually. So you have to control it by yourself.
 
 ```go
 // if you want every task must be done anyway
@@ -147,11 +159,6 @@ func main() {
 
     wg.Wait()
 }
-```
-
-### Example with priorty
-```go
-
 ```
 
 ### Option

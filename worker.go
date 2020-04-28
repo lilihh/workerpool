@@ -14,10 +14,10 @@ func newWorker(id int, dispatcher *dispatcher) *worker {
 }
 
 type worker struct {
-	id             int         // 工人編號
-	isLog          bool        // 是否開啟紀錄
-	quit           chan bool   // 關閉執行緒
-	taskDepositary *dispatcher // 工作倉庫
+	id             int         // identity of worker
+	isLog          bool        // log or not
+	quit           chan bool   // close worker
+	taskDepositary *dispatcher // task storage
 }
 
 func (w *worker) start() {
@@ -28,8 +28,8 @@ func (w *worker) start() {
 			select {
 			case <-w.quit:
 				return
-			case task = <-w.taskDepositary.priorityTasks:
-				// grab priority task fisrt
+			case task = <-w.taskDepositary.urgentTasks:
+				// grab urgent task fisrt
 			default:
 				select {
 				case task = <-w.taskDepositary.normalTasks:

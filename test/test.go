@@ -9,7 +9,7 @@ var wp workerpool.IWorkerPool
 
 func main() {
 	// initialize
-	wp = workerpool.NewWorkerPool(5, 2)
+	wp = workerpool.NewWorkerPool(3, 2)
 	wp.Debug(true)
 
 	wp.Start()

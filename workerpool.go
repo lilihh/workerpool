@@ -1,7 +1,5 @@
 package workerpool
 
-import "fmt"
-
 // NewWorkerPool return a pool with workers
 func NewWorkerPool(buf, numOfWorkers int) IWorkerPool {
 	if buf < 0 || numOfWorkers < 1 {
@@ -50,11 +48,11 @@ func (wp *workerPool) Close() {
 
 func (wp *workerPool) ReceiveTask(task Task, isPriority bool) error {
 	if task == nil {
-		return fmt.Errorf("illeagalArgument")
+		return newError(IllegalArgument)
 	}
 
 	if isPriority {
-		if err := wp.dispatcher.receivePriorityTask(task); err != nil {
+		if err := wp.dispatcher.receiveUrgentTask(task); err != nil {
 			return err
 		}
 	} else {
@@ -71,8 +69,3 @@ func (wp *workerPool) Debug(ok bool) {
 		worker.log(ok)
 	}
 }
-
-// TODO: define error
-// TODO: optimize log
-// TODO: write testing
-// TODO: write priority in README
