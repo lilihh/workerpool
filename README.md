@@ -1,11 +1,11 @@
 # workerpool
 
 ## What is workerpool?
-Workerpool is a pool containing several workers, who are waiting to process tasks independently. In other word, workerpool is a project controlling amount of goroutine/thread.
+Workerpool is a pool containing several workers, who are waiting to process tasks independently. In other word, workerpool is a project which can help you using goroutine easier for it has limited the amount of thread.
 
 ## Implement
 * Every worker is a goroutine/thread, and start working when `Start()` is be called.
-* There's a channel of `Task` in dispatcher, storing tasks send by `ReceiveTask(task Task, isPriority bool)`
+* There's a channel of `Task` in dispatcher, storing tasks recevied by `ReceiveTask(task Task, isPriority bool)`
 * `Task` is an interface holding only one method: `Exec() error`
 * Structure Diagram
 ```text
@@ -36,7 +36,13 @@ Workerpool is a pool containing several workers, who are waiting to process task
     $ go get github.com/lilihh/workerpool
 
 ## How to use?
-This section will show some examples.
+
+**The main idea is**
+1. **generate a workerpool and start it**
+2. **define your own `Task` by implement `Exec() error`**
+3. **make workerpool receive tasks**
+
+This section will show you some examples.
 
 ### Simplest example
 Let's begin with the simplest one.
@@ -77,7 +83,7 @@ func main() {
 ```
 
 ### Example with priorty
-If there are some tasks are urgent, you should mark it with high priority, and workers in workerpool will process if first.
+If there are some tasks are urgent, you should mark it with high priority, and workers in workerpool will process it first.
 
 ```go
 // normal task
