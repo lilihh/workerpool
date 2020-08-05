@@ -5,7 +5,7 @@ Workerpool is a pool containing several workers, who are waiting to process task
 
 ## Implement
 * Every worker is a goroutine/thread, and start working when `Start()` is be called.
-* There's a channel of `Task` in dispatcher, storing tasks recevied by `ReceiveTask(task Task, isPriority bool)`
+* There's a channel of `Task` in dispatcher, storing tasks recevied by `ReceiveNormalTask(task Task)`
 * `Task` is an interface holding only one method: `Exec() error`
 * Structure Diagram
 ```text
@@ -74,7 +74,7 @@ func main() {
 
     // perocess tasks
     for _, task := range tasks {
-        wp.ReceiveTask(task, false)
+        wp.ReceiveNormalTask(task)
     }
 
     // wait
@@ -87,16 +87,16 @@ If there are some tasks are urgent, you should mark it with high priority, and w
 
 ```go
 // normal task
-err := wp.ReceiveTask(task, false)
+err := wp.ReceiveNormalTask(task)
 
 // urgent task
-err := wp.ReceiveTask(task, true)
+err := wp.ReceiveUrgentTask(task)
 
 ```
 
 ### Example with every task must be done
 The capacity of task-buffer in the workerpool is constant. What about the amount of tasks is larger than the capacity?
-`ReceiveTask(task Task, isPriority bool)` will return an error if the workerpool receive a task but the buffer is full already. In that case, workerpool do not receive that task actually. So you have to control it by yourself.
+`ReceiveNormalTask(task Task)` will return an error if the workerpool receive a task but the buffer is full already. In that case, workerpool do not receive that task actually. So you have to control it by yourself.
 
 ```go
 // if you want every task must be done anyway
@@ -109,8 +109,8 @@ func main() {
 
     // perocess tasks
     for _, task := range tasks {
-        for err := wp.ReceiveTask(task, false); err != nil; {
-            err = wp.ReceiveTask(task, false)
+        for err := wp.ReceiveNormalTask(task); err != nil; {
+            err = wp.ReceiveNormalTask(task)
         }
     }
 
@@ -158,8 +158,8 @@ func main() {
     wg.Add(len(tasks))
 
     for _, task := range tasks {
-        for err := wp.ReceiveTask(task, false); err != nil; {
-            err = wp.ReceiveTask(task, false)
+        for err := wp.ReceiveNormalTask(task); err != nil; {
+            err = wp.ReceiveNormalTask(task)
         }
     }
 
@@ -172,6 +172,6 @@ if you want to know what happen in workerpool, you can use `Debug()`
 ```go
 // new a workerpool
 ...
-wp.Debug(true)
+wp.Debug()
 wp.Start()
 ```
