@@ -9,8 +9,8 @@ var wp workerpool.IWorkerPool
 
 func main() {
 	// initialize
-	wp = workerpool.NewWorkerPool(5, 2)
-	wp.Debug(true)
+	wp = workerpool.NewWorkerPool(3, 2)
+	wp.Debug()
 
 	wp.Start()
 	defer wp.Close()
@@ -23,26 +23,17 @@ func main() {
 	}
 
 	wg.Add(len(tasks))
-	// test normal or prioriy? choose one please!
-
-	// // normal test
-	// for _, task := range tasks {
-
-	// 	for err := wp.ReceiveTask(task, false); err != nil; {
-	// 		err = wp.ReceiveTask(task, false)
-	// 	}
-	// }
 
 	// test priority
 	for i, task := range tasks {
 
 		if (i/5)%2 == 0 {
-			for err := wp.ReceiveTask(task, false); err != nil; {
-				err = wp.ReceiveTask(task, false)
+			for err := wp.ReceiveNormalTask(task); err != nil; {
+				err = wp.ReceiveNormalTask(task)
 			}
 		} else {
-			for err := wp.ReceiveTask(task, true); err != nil; {
-				err = wp.ReceiveTask(task, true)
+			for err := wp.ReceiveUrgentTask(task); err != nil; {
+				err = wp.ReceiveUrgentTask(task)
 			}
 		}
 	}

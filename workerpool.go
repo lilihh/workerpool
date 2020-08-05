@@ -1,7 +1,5 @@
 package workerpool
 
-import "fmt"
-
 // NewWorkerPool return a pool with workers
 func NewWorkerPool(buf, numOfWorkers int) IWorkerPool {
 	if buf < 0 || numOfWorkers < 1 {
@@ -24,9 +22,10 @@ func NewWorkerPool(buf, numOfWorkers int) IWorkerPool {
 type IWorkerPool interface {
 	Start()
 	Close()
-	ReceiveTask(task Task, isPriority bool) error
+	ReceiveUrgentTask(task Task) error
+	ReceiveNormalTask(task Task) error
 
-	Debug(ok bool)
+	Debug()
 }
 
 type workerPool struct {
@@ -48,31 +47,32 @@ func (wp *workerPool) Close() {
 	}
 }
 
-func (wp *workerPool) ReceiveTask(task Task, isPriority bool) error {
+func (wp *workerPool) ReceiveNormalTask(task Task) error {
 	if task == nil {
-		return fmt.Errorf("illeagalArgument")
+		return newError(IllegalArgument)
 	}
 
-	if isPriority {
-		if err := wp.dispatcher.receivePriorityTask(task); err != nil {
-			return err
-		}
-	} else {
-		if err := wp.dispatcher.receiveNormalTask(task); err != nil {
-			return err
-		}
+	if err := wp.dispatcher.receiveNormalTask(task); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (wp *workerPool) Debug(ok bool) {
-	for _, worker := range wp.workers {
-		worker.log(ok)
+func (wp *workerPool) ReceiveUrgentTask(task Task) error {
+	if task == nil {
+		return newError(IllegalArgument)
 	}
+
+	if err := wp.dispatcher.receiveUrgentTask(task); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-// TODO: define error
-// TODO: optimize log
-// TODO: write testing
-// TODO: write priority in README
+func (wp *workerPool) Debug() {
+	for _, worker := range wp.workers {
+		worker.log(true)
+	}
+}

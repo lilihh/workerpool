@@ -1,11 +1,11 @@
 # workerpool
 
 ## What is workerpool?
-Workerpool is a pool containing several workers, who are waiting to process tasks independently. In other word, workerpool is a project controlling amount of thread.
+Workerpool is a pool containing several workers, who are waiting to process tasks independently. In other word, workerpool is a project which can help you using goroutine easier for it has limited the amount of thread.
 
 ## Implement
 * Every worker is a goroutine/thread, and start working when `Start()` is be called.
-* There's a channel of `Task` in dispatcher, storing tasks send by `ReceiveTask(task Task)`
+* There's a channel of `Task` in dispatcher, storing tasks recevied by `ReceiveNormalTask(task Task)`
 * `Task` is an interface holding only one method: `Exec() error`
 * Structure Diagram
 ```text
@@ -17,7 +17,7 @@ Workerpool is a pool containing several workers, who are waiting to process task
     |   implement by channel                grab and process task
     |                                                          _
     |   ------------------                                      |
-    |   priority tasks      (grab first)    |---->  worker #1   |
+    |   urgent tasks        (grab first)    |---->  worker #1   |
     |   ██ ██ ██ ██ ██ ██  -----------------|                   |
     |   ------------------                  |---->  worker #2   |
     |                                       |                   |
@@ -36,7 +36,13 @@ Workerpool is a pool containing several workers, who are waiting to process task
     $ go get github.com/lilihh/workerpool
 
 ## How to use?
-This section will show some examples.
+
+**The main idea is**
+1. **generate a workerpool and start it**
+2. **define your own `Task` by implement `Exec() error`**
+3. **make workerpool receive tasks**
+
+This section will show you some examples.
 
 ### Simplest example
 Let's begin with the simplest one.
@@ -68,7 +74,7 @@ func main() {
 
     // perocess tasks
     for _, task := range tasks {
-        wp.ReceiveTask(task, false)
+        wp.ReceiveNormalTask(task)
     }
 
     // wait
@@ -76,9 +82,21 @@ func main() {
 }
 ```
 
+### Example with priorty
+If there are some tasks are urgent, you should mark it with high priority, and workers in workerpool will process it first.
+
+```go
+// normal task
+err := wp.ReceiveNormalTask(task)
+
+// urgent task
+err := wp.ReceiveUrgentTask(task)
+
+```
+
 ### Example with every task must be done
 The capacity of task-buffer in the workerpool is constant. What about the amount of tasks is larger than the capacity?
-`ReceiveTask(task Task)` will return an error if the workerpool receive a task but the buffer is full already. In that case, workerpool do not receive that task actually. So you have to control it by yourself.
+`ReceiveNormalTask(task Task)` will return an error if the workerpool receive a task but the buffer is full already. In that case, workerpool do not receive that task actually. So you have to control it by yourself.
 
 ```go
 // if you want every task must be done anyway
@@ -91,8 +109,8 @@ func main() {
 
     // perocess tasks
     for _, task := range tasks {
-        for err := wp.ReceiveTask(task, false); err != nil; {
-            err = wp.ReceiveTask(task, false)
+        for err := wp.ReceiveNormalTask(task); err != nil; {
+            err = wp.ReceiveNormalTask(task)
         }
     }
 
@@ -140,8 +158,8 @@ func main() {
     wg.Add(len(tasks))
 
     for _, task := range tasks {
-        for err := wp.ReceiveTask(task, false); err != nil; {
-            err = wp.ReceiveTask(task, false)
+        for err := wp.ReceiveNormalTask(task); err != nil; {
+            err = wp.ReceiveNormalTask(task)
         }
     }
 
@@ -149,16 +167,11 @@ func main() {
 }
 ```
 
-### Example with priorty
-```go
-
-```
-
 ### Option
 if you want to know what happen in workerpool, you can use `Debug()`
 ```go
 // new a workerpool
 ...
-wp.Debug(true)
+wp.Debug()
 wp.Start()
 ```
